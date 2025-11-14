@@ -1,0 +1,23 @@
+services:
+  postgres:
+    build: .
+    container_name: global_views_container
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "8002:5432"
+    volumes:
+      - global_views_postgres_data:/var/lib/postgresql
+      - ./global_views_dump_utf8.sql:/docker-entrypoint-initdb.d/global_views_dump_utf8.sql
+    networks:
+      - postgres_network
+
+volumes:
+  global_views_postgres_data:
+
+networks:
+  postgres_network:
+    external: true

@@ -1,0 +1,23 @@
+services:
+  postgres:
+    build: .
+    container_name: imdb_movies_container
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "8000:5432"
+    volumes:
+      - imdb_movies_postgres_data:/var/lib/postgresql
+      - ./imdb_movies_dump_utf8.sql:/docker-entrypoint-initdb.d/imdb_movies_dump_utf8.sql
+    networks:
+      - postgres_network
+
+networks:
+  postgres_network:
+    external: true
+
+volumes:
+  imdb_movies_postgres_data:

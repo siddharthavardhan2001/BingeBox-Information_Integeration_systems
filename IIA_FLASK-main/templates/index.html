@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI Chat App — Fixed CSV Table</title>
+  <style>
+    :root{
+      --bg:#0e0e0f;
+      --panel:#111213;
+      --muted:#9aa0a6;
+      --accent:#06f;
+      --border: #2b2b2d;
+      --card: #0f0f10;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      font-family:"Inter","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial;
+      background:linear-gradient(180deg,#0b0b0c 0%,#0f0f10 100%);
+      color:#e6e6e6;
+    }
+
+    .wrap{
+      box-sizing:border-box;
+      max-width:1200px;
+      margin:18px auto;
+      padding:18px;
+      border:1px solid rgba(255,255,255,0.03);
+      min-height:calc(100vh - 36px);
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
+      border-radius:6px;
+    }
+
+    .top-area{
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      padding: 6px 10px 0 10px;
+    }
+
+    .top-inner{
+      width:90%;
+      max-width:980px;
+      display:flex;
+      gap:12px;
+      flex-direction:column;
+      align-items:center;
+    }
+
+    .input-card{
+      width:100%;
+      background:var(--panel);
+      border:1px solid var(--border);
+      box-shadow:0 6px 20px rgba(0,0,0,0.6);
+      border-radius:6px;
+      padding:14px;
+      box-sizing:border-box;
+    }
+
+    .input-row{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+    }
+
+    .user-input{
+      flex:1;
+      min-height:70px;
+      max-height:340px;
+      resize:none;
+      padding:12px;
+      border-radius:6px;
+      border:1px solid #252526;
+      background:#0b0b0c;
+      color:#e6e6e6;
+      font-size:15px;
+      line-height:1.4;
+      font-family:ui-monospace,Menlo,Monaco,"Roboto Mono",monospace;
+      overflow:auto;
+    }
+
+    .send-btn{
+      background:linear-gradient(180deg,#0ea5ff,#0077e6);
+      color:#fff;
+      border:none;
+      padding:10px 16px;
+      border-radius:7px;
+      cursor:pointer;
+      font-weight:600;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .send-btn:disabled{
+      opacity:0.45;
+      cursor:not-allowed;
+    }
+
+    .spinner{
+      width:14px;height:14px;border-radius:50%;
+      border:2px solid rgba(255,255,255,0.25);
+      border-top-color:rgba(255,255,255,0.95);
+      animation:spin 1s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .output-area{
+      flex:1;display:flex;gap:20px;width:100%;
+    }
+
+    .box{
+      flex:1;background:var(--card);
+      border-radius:6px;padding:16px;
+      border:1px solid var(--border);
+      display:flex;flex-direction:column;
+      min-height:420px;
+    }
+
+    .box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .box-header h3 {
+      margin: 0;
+    }
+
+    .box .content{
+      overflow:auto;
+      padding:8px;
+      border-radius:4px;
+      border:1px dashed rgba(255,255,255,0.02);
+      flex:1;
+      font-family:ui-monospace;
+      font-size:13px;
+      color:#dfe7ef;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    /* Improved table container */
+    .table-container {
+      overflow: auto;
+      max-height: 450px;
+      border: 1px solid #333;
+      border-radius: 4px;
+      background: #0a0a0b;
+    }
+
+    /* Table styles inside leftTableView */
+    .csv-table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+      table-layout: auto;
+      min-width: 100%;
+    }
+    .csv-table th {
+      border-bottom:2px solid #555;
+      padding:10px 12px;
+      color:#7fbaff;
+      text-align:left;
+      background: #0f0f10;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .csv-table td {
+      border-bottom:1px solid #222;
+      padding:8px 12px;
+      vertical-align:top;
+      word-break: break-word;
+    }
+    .csv-table tbody tr:hover {
+      background: rgba(127,186,255,0.05);
+    }
+
+    .toggle-btn {
+      background:#1a1a1c;
+      color:#ccc;
+      border:1px solid #444;
+      padding:6px 12px;
+      font-size:12px;
+      border-radius:4px;
+      cursor:pointer;
+      transition: all 0.2s;
+    }
+    .toggle-btn:hover {
+      background: #252527;
+      border-color: #555;
+    }
+
+    .sql-display {
+      background: rgba(127,186,255,0.03);
+      border: 1px solid rgba(127,186,255,0.1);
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 12px;
+      color: #7fbaff;
+      white-space: pre-wrap;
+      font-family: ui-monospace;
+      font-size: 13px;
+    }
+
+    .hint{font-size:12px;color:var(--muted);}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- USER INPUT -->
+    <div class="top-area">
+      <div class="top-inner">
+        <div class="input-card">
+          <div class="hint">Enter = newline only. Press Send to run query.</div>
+
+          <div class="input-row" style="margin-top:10px;">
+            <textarea id="userInput" class="user-input"
+            placeholder="Ask something like: List top 10 directors by total views"></textarea>
+
+            <button id="sendBtn" class="send-btn">
+              <span id="btnLabel">Send</span>
+              <span id="btnSpinner" class="spinner" style="display:none;"></span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="output-area">
+      <div class="box">
+        <div class="box-header">
+          <h3>SQL + CSV Output</h3>
+          <button id="csvToggleBtn" class="toggle-btn">Raw CSV</button>
+        </div>
+
+        <div class="content">
+          <!-- SQL text -->
+          <div id="leftSQLText" class="sql-display"></div>
+
+          <!-- CSV table (default visible) -->
+          <div id="leftTableView"></div>
+
+          <!-- Raw CSV (hidden initially) -->
+          <pre id="leftRawCSV" style="display:none; white-space:pre-wrap;"></pre>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-header">
+          <h3>LLM Explanation (System Prompt 2)</h3>
+        </div>
+        <div id="rightOutput" class="content"></div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+const inputBox = document.getElementById("userInput");
+const sendBtn = document.getElementById("sendBtn");
+const btnLabel = document.getElementById("btnLabel");
+const btnSpinner = document.getElementById("btnSpinner");
+
+const leftSQLText = document.getElementById("leftSQLText");
+const leftTableView = document.getElementById("leftTableView");
+const leftRawCSV = document.getElementById("leftRawCSV");
+const csvToggleBtn = document.getElementById("csvToggleBtn");
+
+const rightOutput = document.getElementById("rightOutput");
+
+// ENTER = NEW LINE ONLY
+inputBox.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+        setTimeout(() => {
+            inputBox.style.height = "auto";
+            inputBox.style.height = Math.min(inputBox.scrollHeight, 340) + "px";
+        }, 0);
+    }
+});
+
+// Auto-resize
+inputBox.addEventListener("input", () => {
+    inputBox.style.height = "auto";
+    inputBox.style.height = Math.min(inputBox.scrollHeight, 340) + "px";
+});
+
+// Loading icon toggle
+function setLoading(state){
+    sendBtn.disabled = state;
+    btnSpinner.style.display = state ? "inline-block" : "none";
+    btnLabel.textContent = state ? "Working..." : "Send";
+}
+
+// Robust formatting helpers
+function formatLLMExplanation(v) {
+    if (v === null || v === undefined) return "";
+    if (typeof v === "string") return v.trim();
+    if (typeof v === "object") {
+        if ("results" in v) {
+            const r = v.results;
+            if (typeof r === "string") return r.trim();
+            try { return JSON.stringify(r, null, 2); } catch (e) { return String(r); }
+        }
+        if ("error" in v) return String(v.error);
+        try { return JSON.stringify(v, null, 2); } catch (e) { return String(v); }
+    }
+    return String(v);
+}
+function formatCSVOutput(v) {
+    if (v === null || v === undefined) return "";
+    if (typeof v === "string") return v;
+    try { return JSON.stringify(v, null, 2); } catch (e) { return String(v); }
+}
+
+// CSV parser that handles quoted fields
+function parseCSV(csvText) {
+    const rows = [];
+    let cur = "";
+    let row = [];
+    let inQuotes = false;
+    for (let i = 0; i < csvText.length; i++) {
+        const ch = csvText[i];
+        if (ch === '"' ) {
+            // If next char is also quote, it's an escaped quote
+            if (inQuotes && i + 1 < csvText.length && csvText[i + 1] === '"') {
+                cur += '"';
+                i++; // skip next quote
+            } else {
+                inQuotes = !inQuotes;
+            }
+            continue;
+        }
+        if (ch === ',' && !inQuotes) {
+            row.push(cur);
+            cur = "";
+            continue;
+        }
+        if ((ch === '\n' || ch === '\r') && !inQuotes) {
+            // handle CRLF (\r\n)
+            if (ch === '\r' && i + 1 < csvText.length && csvText[i + 1] === '\n') {
+                i++;
+            }
+            row.push(cur);
+            rows.push(row);
+            row = [];
+            cur = "";
+            continue;
+        }
+        cur += ch;
+    }
+    // push last field/row
+    if (cur !== "" || row.length > 0) {
+        row.push(cur);
+        rows.push(row);
+    }
+    // remove possible empty trailing row (when CSV ends with newline)
+    if (rows.length > 0) {
+        const last = rows[rows.length - 1];
+        if (last.length === 1 && last[0] === "") rows.pop();
+    }
+    return rows;
+}
+
+// Convert parsed CSV rows to HTML table with proper container
+function csvRowsToTableHTML(rows) {
+    if (!rows || rows.length === 0) return "<p style='color:#888;'>No data</p>";
+
+    // Use first row as headers
+    const headers = rows[0];
+    const bodyRows = rows.slice(1);
+
+    let html = "<div class='table-container'><table class='csv-table'>";
+    // headers
+    html += "<thead><tr>";
+    for (const h of headers) {
+        html += `<th>${escapeHtml(h)}</th>`;
+    }
+    html += "</tr></thead>";
+
+    // body
+    html += "<tbody>";
+    for (const r of bodyRows) {
+        html += "<tr>";
+        for (let i = 0; i < headers.length; i++) {
+            const cell = (i < r.length) ? r[i] : "";
+            html += `<td>${escapeHtml(cell)}</td>`;
+        }
+        html += "</tr>";
+    }
+    html += "</tbody></table></div>";
+    return html;
+}
+
+// Escape for HTML
+function escapeHtml(s) {
+    if (s === null || s === undefined) return "";
+    return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+// Setup toggle: show table by default
+function setupToggle(csvText) {
+    const csv = csvText || "";
+    leftRawCSV.textContent = csv;
+    // parse
+    let html;
+    try {
+        const rows = parseCSV(csv);
+        html = csvRowsToTableHTML(rows);
+    } catch (e) {
+        html = `<pre style="white-space:pre-wrap;color:#faa;">Failed to parse CSV: ${escapeHtml(String(e))}</pre>`;
+    }
+    leftTableView.innerHTML = html;
+    leftTableView.style.display = "block";
+    leftRawCSV.style.display = "none";
+    csvToggleBtn.textContent = "Raw CSV";
+
+    csvToggleBtn.onclick = () => {
+        if (leftTableView.style.display === "block") {
+            leftTableView.style.display = "none";
+            leftRawCSV.style.display = "block";
+            csvToggleBtn.textContent = "Table View";
+        } else {
+            leftTableView.style.display = "block";
+            leftRawCSV.style.display = "none";
+            csvToggleBtn.textContent = "Raw CSV";
+        }
+    };
+}
+
+// SEND HANDLER
+sendBtn.onclick = async function(){
+    const query = inputBox.value.trim();
+    if (!query) return;
+
+    setLoading(true);
+
+    // clear views
+    leftSQLText.textContent = "Processing...";
+    leftTableView.innerHTML = "";
+    leftRawCSV.textContent = "";
+    rightOutput.textContent = "";
+
+    try {
+        const response = await fetch("/llm-query", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({input: query})
+        });
+
+        if (!response.ok) {
+            const t = await response.text().catch(()=>null);
+            leftSQLText.textContent = "Server Error: " + (t || response.statusText || response.status);
+            setLoading(false);
+            return;
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+            leftSQLText.textContent = "ERROR: " + data.error;
+            setLoading(false);
+            return;
+        }
+
+        // LEFT: SQL + CSV
+        const sqlText = (data.sql_query !== undefined && data.sql_query !== null) ? String(data.sql_query) : "";
+        const csvText = formatCSVOutput(data.csv_output);
+
+        leftSQLText.textContent = sqlText || "(No SQL returned)";
+        setupToggle(csvText);
+
+        // RIGHT: LLM explanation (robust)
+        rightOutput.textContent = formatLLMExplanation(data.llm_explanation);
+
+    } catch (err) {
+        leftSQLText.textContent = "Network Error: " + (err && err.message ? err.message : String(err));
+        rightOutput.textContent = "";
+    }
+
+    setLoading(false);
+};
+</script>
+
+</body>
+</html>

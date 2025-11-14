@@ -1,0 +1,24 @@
+services:
+  postgres:
+    build: .
+    container_name: imdb_tvseries_container
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "8001:5432"
+    volumes:
+      - imdb_tvseries_postgres_data:/var/lib/postgresql
+      - ./imdb_tvseries_dump_utf8.sql:/docker-entrypoint-initdb.d/imdb_tvseries_dump.sql
+    networks:
+      - postgres_network
+
+networks:
+  postgres_network:
+    external: true
+
+
+volumes:
+  imdb_tvseries_postgres_data:
