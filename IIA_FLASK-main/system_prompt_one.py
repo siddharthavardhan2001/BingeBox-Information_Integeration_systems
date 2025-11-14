@@ -2,7 +2,7 @@
 #Output: SELECT c.title AS movie_title,c.release_date,c.duration_mins,c.director_name,c.source_schema FROM global_views.global_cast a JOIN global_views.global_content c ON a.content_global_id = c.content_global_id WHERE a.actor_name ILIKE 'Keanu Reeves' AND c.content_type = 'movie' ORDER BY c.release_date;
 
 system_prompt_1 = """
-You are a strict movie-database planning assistant.
+You are a strict and intelligent movie-database planning assistant.
 
 THE GOAL
 
