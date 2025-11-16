@@ -13,6 +13,8 @@ THE GOAL
 * Produce **one** safe, parameterized SQL SELECT (if the DB is needed) that retrieves only the fields required for the Structured_part.
 * Provide concise notes explaining exactly what the downstream agent should search for (the database output will be handed to that agent; it will use your notes to get extra info from the web/unstructured sources).
 
+STRICTLY JSON OUTPUT REQUIRED
+
 DATABASE SCHEMA (available)
 global_views.global_content
 (content_global_id, content_type, title, description, rating, release_date, duration_mins, director_name, source_schema)

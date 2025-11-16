@@ -3,12 +3,11 @@ from global_view_sql_query import execute_query
 
 from system_prompt_one import system_prompt_1
 from system_prompt_two import system_prompt_2
-from system_prompt_three import system_prompt_3
 
 
 
-# from llm_backend import generate_sql_query
-from nvidia import generate_sql_query
+from llm_backend import generate_sql_query
+# from nvidia import generate_sql_query
 
 import json
 import re
@@ -49,7 +48,7 @@ def run_llm_query():
 
     # ---------------- STEP 2: Get JSON plan from LLM ----------------
     llm_plan = generate_sql_query(user_input, system_prompt_1,1)
-    print(":::::::::::::::::Raw JSON :::::::::::", llm_plan)
+    print(":::::::::::::::::Raw JSON :::::::::::\n", llm_plan)
 
     # Clean and parse JSON if returned as text
     if isinstance(llm_plan, str):
@@ -83,7 +82,7 @@ def run_llm_query():
     if database_needed:
         results = execute_query(sql_query)  # your existing DB executor
 
-        print(":::::::::::ACTUAL RESULT FROM DATABASE::::::")
+        print(":::::::::::ACTUAL RESULT FROM DATABASE::::::\n")
 
         if results is None:
             return jsonify({'error': 'Database error occurred'}), 500
@@ -115,19 +114,9 @@ def run_llm_query():
             "count": len(results)
         })
 
-    if (sufficient == True) and (database_needed == True) :
-        print(":::::: SUFFICIENT IS TRUE BUT DATABASE RETURNED NON EMPTY :::::::::\n\n\n")
+    
 
-        return jsonify({
-            "sql_query": sql_query,
-            "csv_output": csv_output,  # Always CSV (even empty)
-            "llm_explanation": " ",  # Filled only when insufficient
-            "count": len(results)
-        })
-
-    # ---------------- STEP 5: If sufficient = True → Return DB CSV directly ----------------
-    if (sufficient == False) and (database_needed == True):
-
+    if (database_needed == True):
         lines = csv_output.strip().split("\n")
         top25_csv = "\n".join(lines[:26])
         enriched_response = handle_insufficient_case(top25_csv,llm_plan)
@@ -201,4 +190,3 @@ def handle_insufficient_case(csv_output, llm_plan):
 
 if __name__ == '__main__':
     app.run(debug=True,port=5050)
-

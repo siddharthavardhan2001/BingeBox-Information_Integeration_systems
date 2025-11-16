@@ -1,52 +1,63 @@
+# llm_backend.py (edited)
 import google.generativeai as genai
-from system_prompt_two import system_prompt_2
 import re
+import traceback
 
-def generate_sql_query(user_input, system_prompt, system_prompt_number):
+API_KEY = "AIzaSyBfesS0nbMS-1iXPxdGwq3PuDLsCDpORac"   # put your API key
+
+def generate_sql_query(user_input, system_prompt, return_raw=True):
     """
-    Generate SQL query from natural language input using Google Gemini.
-
-    Args:
-        user_input (str): Natural language query from user
-
-    Returns:
-        str: Generated SQL query or None if error
+    This version enforces raw text output.
+    - The system_prompt should *explicitly* instruct the model to output ONLY the desired text.
+    - return_raw is kept True by default; this function will return the cleaned raw string.
     """
     try:
-        # Configure API key
-        genai.configure(api_key="")
-
-        if system_prompt_number == 3:
-            # Initialize the model with system instruction
-            model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash",
-                system_instruction=system_prompt
-            )
-        else:
-            # Initialize the model with system instruction
-            model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash",
-                system_instruction=system_prompt
-            )
+        genai.configure(api_key=API_KEY)
+        model = genai.GenerativeModel("gemini-2.0-flash")
 
 
+        # Option B: if you must combine (fallback)
+        combined_prompt = system_prompt.strip() + "\n\nUSER: " + user_input.strip()
 
+        # Generation config: deterministic + reasonable length; include stop sequences if needed.
+        gen_cfg = {
+            "temperature": 0.0,
+            "max_output_tokens": 1500,
+            # "stop_sequences": ["\n\n"]   # optional: add if you reliably want the model to stop on blank line
+        }
 
-        # Generate SQL query from user input
-        response = model.generate_content(user_input)
+        response = model.generate_content(
+            combined_prompt,
+            generation_config=gen_cfg
+        )
 
-        # Extract the text content
-        text = response.text
+        # Extract raw text from whichever field the SDK returned.
+        raw_text = None
+        if hasattr(response, "text") and response.text:
+            raw_text = response.text
+        elif hasattr(response, "output_text") and getattr(response, "output_text", None):
+            raw_text = response.output_text
+        elif hasattr(response, "candidates") and response.candidates:
+            cand = response.candidates[0]
+            if hasattr(cand, "content") and cand.content:
+                raw_text = cand.content
+            elif hasattr(cand, "text") and cand.text:
+                raw_text = cand.text
 
-        # Remove markdown code fences (```json ... ```)
-        clean_text = re.sub(r"^```(?:json)?", "", text.strip(), flags=re.IGNORECASE)
-        clean_text = re.sub(r"```$", "", clean_text.strip())
+        if raw_text is None:
+            raw_text = str(response)
 
-        #print("response.text:", response.text)
-        #print("clean text:", clean_text)
+        # Minimal cleaning: strip whitespace and remove surrounding code fences (if the model still added them).
+        clean = raw_text.strip()
+        # remove triple-backtick fences if any (but do NOT pretty-format or parse further)
+        clean = re.sub(r"^```(?:\w+)?\s*", "", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"\s*```$", "", clean, flags=re.IGNORECASE)
+        clean = clean.strip()
 
-        return clean_text
+        # Return the raw cleaned string (no JSON parsing, no restructuring)
+        return clean
 
     except Exception as e:
-        print(f"LLM Error: {e}")
+        print("LLM Error:", repr(e))
+        traceback.print_exc()
         return None
