@@ -12,13 +12,16 @@ The system supports:
 -Hybrid reasoning combining description search + metadata
 
 # How to Run the Project
-Step 1: Clone
-git clone https://github.com/yourusername/BINGE_BOX.git
-cd BINGE_BOX
-Step 2: Install Dependencies
-pip install -r requirements.txt
-Step 3: Launch Server
-python3 main.py
+# How to Run the Project  
+*Step 1: Clone  
+git clone https://github.com/yourusername/BINGE_BOX.git  
+cd BINGE_BOX  
+
+*Step 2: Install Dependencies  
+pip install -r requirements.txt  
+
+*Step 3: Launch Server  
+python3 main.py  
 
 
 # End user UI: 
